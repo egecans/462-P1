@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # Assuming the first column of your data is the label
-features = np.load('data_large.npy')
-labels = np.load('label_large.npy')
+features = np.load('data_small.npy')
+labels = np.load('label_small.npy')
 
 # it returns 1 if dot product >= 0 else return -1
 def prediction_result(dot_product):
@@ -99,12 +99,57 @@ def plot_misclassifications(misclassification_in_each_step, learning_rate):
     plt.title('Learning rate: ' + str(learning_rate))
     plt.show() 
 
+def repeat_training(features, labels, learning_rate, epochs, num_training):
+
+    step_counts = []
+    weights = []
+    # repeat process
+    for _ in range(num_training):
+
+        # Generate a sequence of indices and shuffle them to get different initial points
+        indices = np.arange(features.shape[0])
+        np.random.shuffle(indices)
+
+        # Use the shuffled indices to reorder both the features and labels
+        shuffled_features = features[indices]
+        shuffled_labels = labels[indices]
+
+        trained_weights, features_with_label, misclassifications = perceptron(shuffled_features, shuffled_labels, learning_rate, epochs)
+        
+        # add step counts to plot them
+        step_counts.append(len(misclassifications))
+        weights.append(trained_weights)
+
+        print('Trained weights:', trained_weights)
+        plot_funct(features_with_label, trained_weights)
+        plot_misclassifications(misclassifications, learning_rate)
+    
+    return step_counts, weights
+
 
 # Train the Perceptron
-learning_rate = 10
-epochs = 1000
-trained_weights, features_with_label, misclassification_in_each_step = perceptron(features, labels, learning_rate, epochs)
+def train_once():
+    learning_rate = 10
+    epochs = 1000
+    trained_weights, features_with_label, misclassification_in_each_step = perceptron(features, labels, learning_rate, epochs)
 
-print('Trained weights:', trained_weights)
-plot_funct(features_with_label, trained_weights)
-plot_misclassifications(misclassification_in_each_step, learning_rate)
+    print('Trained weights:', trained_weights)
+    plot_funct(features_with_label, trained_weights)
+    plot_misclassifications(misclassification_in_each_step, learning_rate)
+
+
+# plotting misclassification w.r.t learning rate
+def plot_iterations(step_counts):
+    plt.plot(step_counts)
+    plt.xlabel('step')
+    plt.ylabel('epoch')
+    plt.show() 
+
+
+learning_rate = 0.1
+num_of_iterations = 3
+max_epochs = 1000
+
+step_counts, trained_weights = repeat_training(features,labels,learning_rate,max_epochs,num_of_iterations)
+print(trained_weights)
+plot_iterations(step_counts)
