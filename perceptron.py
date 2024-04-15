@@ -1,9 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 # Assuming the first column of your data is the label
 features = np.load('data_small.npy')
 labels = np.load('label_small.npy')
+
+features_large = np.load('data_large.npy')
+labels_large = np.load('label_large.npy')
 
 # it returns 1 if dot product >= 0 else return -1
 def prediction_result(dot_product):
@@ -18,11 +22,8 @@ def predicted_false(output, label):
 
 
 # Perceptron Learning Algorithm
-def perceptron(features, labels, learning_rate, epochs):
+def perceptron(features, labels, learning_rate, epochs, weights):
     
-    # Initialize weights to zero or a small random value
-    # w0, w1, w2
-    weights = np.zeros(features.shape[1])
     misclassification_steps = []
 
 
@@ -52,6 +53,7 @@ def perceptron(features, labels, learning_rate, epochs):
 
         # If no misclassifications, the model is perfect under current data, stop the algorithm
         if misclassified == 0:
+            print("Iteration Count: " + str(len(misclassification_steps)))
             break
     
     # change list to np.array
@@ -99,12 +101,29 @@ def plot_misclassifications(misclassification_in_each_step, learning_rate):
     plt.title('Learning rate: ' + str(learning_rate))
     plt.show() 
 
+
+# shuffling data to observe iteration count changes
+def shuffle_data_order(features, labels):
+    # Generate a sequence of indices and shuffle them to get different initial points
+    indices = np.arange(features.shape[0])
+    np.random.shuffle(indices)
+
+    # Use the shuffled indices to reorder both the features and labels
+    shuffled_features = features[indices]
+    shuffled_labels = labels[indices]
+    return shuffled_features, shuffled_labels
+
 def repeat_training(features, labels, learning_rate, epochs, num_training):
 
     step_counts = []
     weights = []
-    # repeat process
+
+    # to initialize different datapoints we need to random weights
+    initial_weights_sets = []
     for _ in range(num_training):
+        initial_weights_sets.append(np.random.randn(features.shape[1]))
+    
+    for i in range(num_training):
 
         # Generate a sequence of indices and shuffle them to get different initial points
         indices = np.arange(features.shape[0])
@@ -114,7 +133,7 @@ def repeat_training(features, labels, learning_rate, epochs, num_training):
         shuffled_features = features[indices]
         shuffled_labels = labels[indices]
 
-        trained_weights, features_with_label, misclassifications = perceptron(shuffled_features, shuffled_labels, learning_rate, epochs)
+        trained_weights, features_with_label, misclassifications = perceptron(shuffled_features, shuffled_labels, learning_rate, epochs, initial_weights_sets[i])
         
         # add step counts to plot them
         step_counts.append(len(misclassifications))
@@ -128,10 +147,13 @@ def repeat_training(features, labels, learning_rate, epochs, num_training):
 
 
 # Train the Perceptron
-def train_once():
+def train_once(features, labels):
     learning_rate = 10
     epochs = 1000
-    trained_weights, features_with_label, misclassification_in_each_step = perceptron(features, labels, learning_rate, epochs)
+    # Initialize weights to zero or a small random value
+    # w0, w1, w2
+    weights = np.zeros(features.shape[1])
+    trained_weights, features_with_label, misclassification_in_each_step = perceptron(features, labels, learning_rate, epochs, weights)
 
     print('Trained weights:', trained_weights)
     plot_funct(features_with_label, trained_weights)
@@ -150,6 +172,19 @@ learning_rate = 0.1
 num_of_iterations = 3
 max_epochs = 1000
 
-step_counts, trained_weights = repeat_training(features,labels,learning_rate,max_epochs,num_of_iterations)
-print(trained_weights)
-plot_iterations(step_counts)
+print("Which option would you prefer \n 1 for train small dataset once \n 2 for train large dataset once \n 3 for train small dataset 3 times with different initializations \n 4 for train large dataset 3 times with different initializations")
+option = input()
+
+# Execute functions based on the input
+if option == "1":
+    train_once(features, labels)
+elif option == "2":
+    train_once(features_large, labels_large)
+elif option == "3":
+    step_counts, trained_weights = repeat_training(features, labels, learning_rate, max_epochs, num_of_iterations)
+    #print(f"Step counts: {step_counts}, Trained weights: {trained_weights}")
+elif option == "4":
+    step_counts, trained_weights = repeat_training(features_large, labels_large, learning_rate, max_epochs, num_of_iterations)
+    #print(f"Step counts: {step_counts}, Trained weights: {trained_weights}")
+else:
+    print("Invalid option! " + str(option) + " Choose from 1, 2, 3, or 4.")
