@@ -7,7 +7,7 @@ breast_cancer_wisconsin_diagnostic = fetch_ucirepo(id=17)
 # data (as pandas dataframes)
 data = breast_cancer_wisconsin_diagnostic.data.original
 
-
+# shuffle data to ensure randomness and split 80% for training and 20% for testing
 def shuffle_and_split_dataframe(df):
     df = df.sample(frac=1, random_state=1).reset_index(drop=True)
     split_index = int(0.8 * len(df))
@@ -18,6 +18,7 @@ def shuffle_and_split_dataframe(df):
     return train_df, test_df
 
 
+# splitting dataframe to malignant and benign
 def split_dataframe_to_targets(df):
     grouped = df.groupby("Diagnosis")
     group_m = grouped.get_group('M')
@@ -25,6 +26,7 @@ def split_dataframe_to_targets(df):
     return group_m, group_b
 
 
+# training the model
 def train_model(df):
     # Calculating prior values
     p_malignant = df.value_counts("Diagnosis")["M"] / len(df.index)
@@ -33,7 +35,7 @@ def train_model(df):
     # Splitting dataframe
     malignant_dataframe, bening_dataframe = split_dataframe_to_targets(df)
 
-    # Calculating means
+    # Calculating means and standard deviations for malignant and benign seperately
     malignant_mean_list = malignant_dataframe.describe().loc["mean"].to_list()[1:]
     malignant_std_list = malignant_dataframe.describe().loc["std"].to_list()[1:]
     bening_mean_list = bening_dataframe.describe().loc["mean"].to_list()[1:]
@@ -42,10 +44,14 @@ def train_model(df):
     return p_malignant, malignant_mean_list, malignant_std_list, p_benign, bening_mean_list, bening_std_list
 
 
+# predicting the model
 def predict_model(test_df, train_df):
+    # Training the model
     p_malignant, malignant_mean_list, malignant_std_list, p_benign, bening_mean_list, bening_std_list = train_model(
         train_df)
     success = 0
+    
+    # calculating the probabilities of each row and comparing them to find accuracy
     for row in test_df.itertuples():
         malignant_prediction = p_malignant
         benign_prediction = p_benign
